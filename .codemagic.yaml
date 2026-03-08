@@ -1,0 +1,56 @@
+# Codemagic CI/CD configuration for KONTRAK iOS builds
+# This file enables building iOS app without a Mac computer
+
+workflows:
+  ios-workflow:
+    name: KONTRAK iOS Build
+    max_build_duration: 120
+    instance_type: mac_mini_m1
+    environment:
+      flutter: stable
+      xcode: latest
+      cocoapods: default
+      groups:
+        - app_config # Add your environment variables here in Codemagic UI
+      vars:
+        # Set these in Codemagic UI → Teams → Environment Variables
+        # Or override in build settings
+        SUPABASE_URL: "https://YOUR-PROJECT.supabase.co"
+        SUPABASE_ANON_KEY: "YOUR_SUPABASE_ANON_KEY"
+        API_BASE_URL: "https://kontrakapi.onrender.com"
+    scripts:
+      - name: Get Flutter dependencies
+        script: |
+          flutter pub get
+      - name: Install CocoaPods dependencies
+        script: |
+          cd ios && pod install && cd ..
+      - name: Build iOS app
+        script: |
+          flutter build ios --release \
+            --dart-define=SUPABASE_URL="$SUPABASE_URL" \
+            --dart-define=SUPABASE_ANON_KEY="$SUPABASE_ANON_KEY" \
+            --dart-define=API_BASE_URL="$API_BASE_URL" \
+            --no-codesign
+    artifacts:
+      - build/ios/iphoneos/Runner.app
+    publishing:
+      email:
+        recipients:
+          - your-email@example.com # Change this
+        notify:
+          success: true
+          failure: true
+      scripts:
+        - name: Create IPA
+          script: |
+            # Create IPA from built app
+            mkdir -p build/ios/ipa/Payload
+            cp -r build/ios/iphoneos/Runner.app build/ios/ipa/Payload/
+            cd build/ios/ipa
+            zip -r KONTRAK.ipa Payload
+            cd ../../..
+        - name: Upload IPA artifact
+          script: |
+            # IPA will be available for download in Codemagic UI
+            echo "IPA created at: build/ios/ipa/KONTRAK.ipa"

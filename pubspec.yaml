@@ -1,0 +1,29 @@
+name: kontrak_app
+description: KONTRAK – Civil contractor management app
+publish_to: "none"
+
+environment:
+  sdk: ">=3.0.0 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_riverpod: any
+  dio: any
+  intl: any
+  fl_chart: any
+  hive: any
+  hive_flutter: any
+  supabase_flutter: any
+  flutter_secure_storage: any
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: any
+  build_runner: any
+  json_serializable: any
+
+flutter:
+  uses-material-design: true
+
