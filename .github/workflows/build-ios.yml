@@ -26,13 +26,30 @@ jobs:
           flutter-version: 'stable'
           channel: 'stable'
 
+      - name: Verify Flutter setup
+        run: flutter doctor -v
+
       - name: Get Flutter dependencies
         run: flutter pub get
 
+      - name: Create iOS platform files (if missing)
+        run: |
+          if [ ! -d "ios" ]; then
+            echo "iOS folder not found. Creating iOS platform files..."
+            flutter create --platforms=ios .
+          else
+            echo "iOS folder exists. Verifying structure..."
+            ls -la ios/
+          fi
+
       - name: Install CocoaPods dependencies
         run: |
+          if [ ! -f "ios/Podfile" ]; then
+            echo "Error: Podfile not found. iOS platform files may be incomplete."
+            exit 1
+          fi
           cd ios
-          pod install
+          pod install --repo-update
           cd ..
 
       - name: Build iOS app
@@ -41,11 +58,16 @@ jobs:
           SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
           API_BASE_URL: ${{ secrets.API_BASE_URL }}
         run: |
+          echo "Building iOS app with environment variables..."
+          echo "SUPABASE_URL: ${SUPABASE_URL:0:30}..."
+          echo "API_BASE_URL: $API_BASE_URL"
+          
           flutter build ios --release \
             --dart-define=SUPABASE_URL="$SUPABASE_URL" \
             --dart-define=SUPABASE_ANON_KEY="$SUPABASE_ANON_KEY" \
             --dart-define=API_BASE_URL="$API_BASE_URL" \
-            --no-codesign
+            --no-codesign \
+            --verbose
 
       - name: Create IPA
         run: |
